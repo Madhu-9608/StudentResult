@@ -1,0 +1,74 @@
+import java.util.Scanner;
+import java.util.InputMismatchException;
+
+class InvalidMarksException extends Exception {
+
+    InvalidMarksException(String message) {
+        super(message);
+    }
+}
+
+class Student {
+    String name;
+    int marks;
+
+    Student(String name, int marks) {
+        this.name = name;
+        this.marks = marks;
+    }
+
+    void display() {
+        System.out.println("Student Name: " + name);
+        System.out.println("Marks: " + marks);
+    }
+}
+
+class CollegeStudent extends Student {
+
+    CollegeStudent(String name, int marks) {
+        super(name, marks);
+    }
+}
+
+public class Main {
+
+    public static void main(String[] args) {
+
+        Scanner sc = new Scanner(System.in);
+
+        try {
+            System.out.println("Enter Student Name:");
+            String name = sc.nextLine();
+
+            System.out.println("Enter marks:");
+            int marks = sc.nextInt();
+
+            if (marks < 0 || marks > 100) {
+                throw new InvalidMarksException(
+                    "Invalid Marks! Marks should be between 0 and 100."
+                );
+            }
+
+            CollegeStudent student =
+                    new CollegeStudent(name, marks);
+
+            System.out.println("\nStudent Details:");
+            student.display();
+
+        } catch (InvalidMarksException e) {
+
+            System.out.println("Error: " + e.getMessage());
+
+        } catch (InputMismatchException e) {
+
+            System.out.println(
+                "Error: Please enter marks as a number."
+            );
+
+        } finally {
+
+            System.out.println("Validation completed.");
+            sc.close();
+        }
+    }
+}
