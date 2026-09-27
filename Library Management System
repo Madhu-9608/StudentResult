@@ -1,0 +1,52 @@
+import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.HashMap;
+class Book{
+     int BookID;
+     String Title;
+     String Author;
+     double Price;
+     Book(int BookID,String Title,String Author,double Price){
+              this.BookID=BookID;
+              this.Title=Title;
+              this.Author=Author;
+              this.Price=Price;
+}
+     
+       ArrayList<Book>books=new ArrayList<>();
+       HashMap<Integer,Book>bookMap=new HashMap<>();
+     void addBook(int BookID,String Title,String Author,double Price){
+       Book b=new Book(BookID,Title,Author,Price);
+       books.add(b);
+       bookMap.put(BookID,b);}
+     void display(){
+       for(Book b: books){
+              System.out.println("BookID: "+b.BookID);
+              System.out.println("Book Title: "+b.Title);
+              System.out.println("Author: "+b.Author);
+              System.out.println("Book Price: "+b.Price);}}
+     void searchBook(){
+       Scanner scanner = new Scanner(System.in);
+       System.out.println("Enter a bookID:");
+       int BookID=scanner.nextInt();
+       if(bookMap.containsKey(BookID)){
+               Book b= bookMap.get(BookID);
+               System.out.println("BookID: "+b.BookID);
+               System.out.println("Book Title: "+b.Title);
+               System.out.println("Author: "+b.Author);
+               System.out.println("Book Price: "+b.Price);
+               }
+       else{
+                System.out.println("Book not found");
+       }}
+     public static void main(String[] args){
+     Book b = new Book(0, "", "", 0);
+     b.addBook(101, "Java", "James", 600);
+     b.addBook(102, "Python", "GuidoVanRossum", 800);
+     b.searchBook();
+}
+}
+
+
+       
+
