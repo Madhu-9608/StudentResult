@@ -1,0 +1,91 @@
+import java.util.*;
+
+class Employee {
+    private int id;
+    private String name;
+    private double salary;
+
+    public Employee(int id, String name, double salary) {
+        this.id = id;
+        this.name = name;
+        this.salary = salary;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
+
+    @Override
+    public String toString() {
+        return id + " - " + name + " - Salary: " + salary;
+    }
+}
+
+public class SalaryStreamDemo {
+    public static void main(String[] args) {
+
+        List<Employee> employees = Arrays.asList(
+            new Employee(101, "Rahul", 45000),
+            new Employee(102, "Priya", 60000),
+            new Employee(103, "Amit", 35000),
+            new Employee(104, "Sneha", 75000),
+            new Employee(105, "Kiran", 50000)
+        );
+
+        double salaryThreshold = 50000;
+
+        System.out.println(
+            "Employees with salary > " + salaryThreshold + ":"
+        );
+
+        employees.stream()
+                .filter(e -> e.getSalary() > salaryThreshold)
+                .forEach(System.out::println);
+
+        System.out.println("\nSalary in Ascending Order:");
+
+        employees.stream()
+                .sorted(Comparator.comparingDouble(Employee::getSalary))
+                .forEach(System.out::println);
+
+        System.out.println("\nSalary in Descending Order:");
+
+        employees.stream()
+                .sorted(Comparator.comparingDouble(Employee::getSalary).reversed())
+                .forEach(System.out::println);
+
+        double averageSalary = employees.stream()
+                .mapToDouble(Employee::getSalary)
+                .average()
+                .orElse(0.0);
+
+        System.out.println("Average Salary: " + averageSalary);
+
+        double maximumSalary = employees.stream()
+                .mapToDouble(Employee::getSalary)
+                .max()
+                .orElse(0.0);
+
+        System.out.println("Maximum Salary: " + maximumSalary);
+
+        double minimumSalary = employees.stream()
+                .mapToDouble(Employee::getSalary)
+                .min()
+                .orElse(0.0);
+
+        System.out.println("Minimum Salary: " + minimumSalary);
+
+        long employeeCount = employees.stream()
+                .count();
+
+        System.out.println("Total Employees: " + employeeCount);
+    }
+}
