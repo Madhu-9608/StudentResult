@@ -1,0 +1,83 @@
+package com.library.smart;
+
+import org.springframework.boot.*;
+import org.springframework.boot.autoconfigure.*;
+import org.springframework.web.bind.annotation.*;
+import java.util.*;
+import java.util.concurrent.*;
+
+@SpringBootApplication
+@RestController
+@RequestMapping("/api")
+public class SmartLibraryApplication {
+    Map<Integer, Book> books = new ConcurrentHashMap<>();
+    Map<Integer, Member> members = new ConcurrentHashMap<>();
+    List<Reservation> reservations = new CopyOnWriteArrayList<>();
+
+    public SmartLibraryApplication() {
+        books.put(1, new Book(1, "Java", 2));
+        members.put(101, new Member(101, "Arun", 2));
+        members.put(201, new Member(201, "Ramesh", 5));
+    }
+
+    public static void main(String[] args) {
+        SpringApplication.run(SmartLibraryApplication.class, args);
+    }
+
+    @GetMapping("/books")
+    public Collection<Book> getBooks() {
+        return books.values();
+    }
+
+    @PostMapping("/books")
+    public Book addBook(@RequestBody Book b) {
+        books.put(b.id, b);
+        return b;
+    }
+
+    @GetMapping("/members")
+    public Collection<Member> getMembers() {
+        return members.values();
+    }
+
+    @PostMapping("/reservations")
+    public synchronized Reservation reserve(@RequestBody int[] d) {
+        Member m = members.get(d[1]);
+        Book b = books.get(d[0]);
+
+        if (m == null || b == null || b.copies <= 0 || m.borrowed >= m.limit)
+            throw new RuntimeException("Reservation failed");
+
+        b.copies--;
+        m.borrowed++;
+        Reservation r = new Reservation(reservations.size() + 1, d[0], d[1]);
+        reservations.add(r);
+        return r;
+    }
+
+    @GetMapping("/reservations")
+    public List<Reservation> getReservations() {
+        return reservations;
+    }
+}
+
+class Book {
+    public int id, copies;
+    public String title;
+
+    public Book() {}
+    Book(int i, String t, int c) { id=i; title=t; copies=c; }
+}
+
+class Member {
+    public int id, borrowed=0, limit;
+    public String name;
+
+    Member(int i, String n, int l) { id=i; name=n; limit=l; }
+}
+
+class Reservation {
+    public int id, bookId, memberId;
+
+    Reservation(int i, int b, int m) { id=i; bookId=b; memberId=m; }
+}
