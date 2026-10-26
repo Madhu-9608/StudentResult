@@ -1,0 +1,57 @@
+import java.net.URI;
+import java.net.http.*;
+
+interface CodeAssistant {
+    String ask(String task, String code);
+}
+
+class OfflineCodeAssistant implements CodeAssistant {
+    public String ask(String task, String code) {
+        if (task.equals("generate"))
+            return "int fact(int n) { int r=1; for(int i=1;i<=n;i++) r*=i; return r; }";
+        if (task.equals("explain"))
+            return "The loop adds numbers from 1 to 5. Sum = 15.";
+        return "Replace i <= arr.length with i < arr.length.";
+    }
+}
+
+class ApiCodeAssistant implements CodeAssistant {
+    String key;
+    ApiCodeAssistant(String key) { this.key = key; }
+
+    public String ask(String task, String code) {
+        try {
+            String prompt = task + ": " + code;
+            String body = "{\"model\":\"claude-sonnet-4-5\","
+                + "\"max_tokens\":300,\"messages\":[{\"role\":\"user\","
+                + "\"content\":\"" + prompt.replace("\"", "\\\"")
+                + "\"}]}";
+
+            HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create("https://api.anthropic.com/v1/messages"))
+                .header("content-type", "application/json")
+                .header("x-api-key", key)
+                .header("anthropic-version", "2023-06-01")
+                .POST(HttpRequest.BodyPublishers.ofString(body)).build();
+
+            return HttpClient.newHttpClient()
+                .send(req, HttpResponse.BodyHandlers.ofString()).body();
+        } catch (Exception e) {
+            return "API call failed";
+        }
+    }
+}
+
+public class AICodeAssistant {
+    public static void main(String[] args) {
+        String key = System.getenv("ANTHROPIC_API_KEY");
+        CodeAssistant a = (key == null || key.isEmpty())
+            ? new OfflineCodeAssistant() : new ApiCodeAssistant(key);
+
+        System.out.println("Generate: " + a.ask("generate", ""));
+        System.out.println("Explain: " + a.ask("explain",
+            "for(int i=1;i<=5;i++) sum+=i;"));
+        System.out.println("Debug: " + a.ask("debug",
+            "for(int i=0;i<=arr.length;i++)"));
+    }
+}
