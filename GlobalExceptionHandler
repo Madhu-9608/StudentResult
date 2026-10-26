@@ -1,0 +1,134 @@
+package com.example.hospital;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.context.annotation.Bean;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+@SpringBootApplication
+public class HospitalApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(HospitalApplication.class, args);
+    }
+
+    @Bean
+    RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+}
+
+class Patient {
+    public int id;
+
+    @NotBlank(message = "Name is required")
+    public String name;
+
+    public Patient() {}
+
+    public Patient(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+}
+
+class Appointment {
+    public int id;
+    public int patientId;
+
+    @NotBlank(message = "Date is required")
+    public String date;
+
+    public Appointment() {}
+
+    public Appointment(int id, int patientId, String date) {
+        this.id = id;
+        this.patientId = patientId;
+        this.date = date;
+    }
+}
+
+@RestController
+@RequestMapping("/patients")
+class PatientController {
+    private final List<Patient> patients =
+            new CopyOnWriteArrayList<>();
+
+    @PostMapping
+    public Patient add(@Valid @RequestBody Patient p) {
+        p.id = patients.size() + 1;
+        patients.add(p);
+        return p;
+    }
+
+    @GetMapping
+    public List<Patient> getAll() {
+        return patients;
+    }
+
+    @GetMapping("/{id}")
+    public Patient get(@PathVariable int id) {
+        return patients.stream()
+                .filter(p -> p.id == id)
+                .findFirst()
+                .orElseThrow(() ->
+                    new RuntimeException("Patient not found"));
+    }
+}
+
+@RestController
+@RequestMapping("/appointments")
+class AppointmentController {
+    private final List<Appointment> appointments =
+            new CopyOnWriteArrayList<>();
+
+    private final RestTemplate restTemplate;
+
+    AppointmentController(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+    }
+
+    @PostMapping
+    public Appointment add(@Valid @RequestBody Appointment a) {
+        Patient p = restTemplate.getForObject(
+            "http://localhost:8080/patients/" + a.patientId,
+            Patient.class);
+
+        if (p == null)
+            throw new RuntimeException("Patient not found");
+
+        a.id = appointments.size() + 1;
+        appointments.add(a);
+        return a;
+    }
+
+    @GetMapping
+    public List<Appointment> getAll() {
+        return appointments;
+    }
+}
+
+@RestControllerAdvice
+class GlobalExceptionHandler {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, String> validationError(
+            MethodArgumentNotValidException e) {
+        return Map.of("error", "Invalid request data");
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, String> handleError(Exception e) {
+        return Map.of("error", e.getMessage());
+    }
+}
