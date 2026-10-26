@@ -1,0 +1,54 @@
+import java.util.*;
+
+class Course {
+    String title;
+    Set<String> tags;
+    double rating;
+
+    Course(String t, double r, String... tags) {
+        title = t;
+        rating = r;
+        this.tags = new HashSet<>(Arrays.asList(tags));
+    }
+}
+
+public class RecommendationSystem {
+    public static void main(String[] args) {
+        List<Course> courses = Arrays.asList(
+            new Course("Core Java", 4.6, "java", "oop"),
+            new Course("Spring Boot", 4.7, "java", "backend", "api"),
+            new Course("Machine Learning", 4.5, "ai", "python"),
+            new Course("Java DSA", 4.4, "java", "programming"),
+            new Course("REST API", 4.3, "api", "backend")
+        );
+
+        Map<String, Double> prefs = new HashMap<>();
+        prefs.put("java", 1.0);
+        prefs.put("backend", 0.8);
+        prefs.put("api", 0.6);
+
+        Set<String> completed = Set.of("Core Java");
+        Map<Course, Double> scores = new HashMap<>();
+
+        for (Course c : courses) {
+            if (completed.contains(c.title)) continue;
+
+            double dot = 0, norm = 0;
+            for (String tag : prefs.keySet()) {
+                double w = prefs.get(tag);
+                norm += w * w;
+                if (c.tags.contains(tag)) dot += w;
+            }
+
+            double sim = dot / (Math.sqrt(norm) * Math.sqrt(c.tags.size()));
+            if (sim > 0)
+                scores.put(c, 0.8 * sim + 0.2 * c.rating / 5.0);
+        }
+
+        scores.entrySet().stream()
+            .sorted((a, b) -> Double.compare(b.getValue(), a.getValue()))
+            .limit(3)
+            .forEach(e -> System.out.printf("%s : %.3f%n",
+                e.getKey().title, e.getValue()));
+    }
+}
